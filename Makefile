@@ -8,7 +8,7 @@ OBJCOPY = $(GCC_ROOT)/arm-none-eabi-objcopy
 
 DEFINES = -D__MSP432P401R__
 
-CFLAGS = -c -Wall -Os -I. -Iinclude/ -Icmsis/include/CMSIS -Icmsis/include/
+CFLAGS = -c -Wall -std=c99 -Os -I. -Iinclude/ -Icmsis/include/CMSIS -Icmsis/include/
 CFLAGS += -mthumb -mcpu=cortex-m4 -nostartfiles
 
 LDFLAGS = -Tcmsis/include/msp432p401r.lds -mthumb -mcpu=cortex-m4 -nostartfiles
@@ -31,6 +31,9 @@ $(TARGET): $(OBJECTS) $(CMSIS_OBJECTS)
 
 %.o: %.c
 	$(CC) $(DEFINES) $(CFLAGS) $^ -o $@
+
+burn:
+	/opt/uniflash/dslite.sh --config=/opt/uniflash/user_files/configs/msp432p401r.ccxml device.hex
 
 clean:
 	rm *.o *.elf
