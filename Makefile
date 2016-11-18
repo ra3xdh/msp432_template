@@ -1,10 +1,12 @@
 TARGET=device.elf
 
 GCC_ROOT = /opt/gcc-arm-none-eabi/bin
+OOCD_ROOT = /opt/oocd-msp432/bin
 
 CC = $(GCC_ROOT)/arm-none-eabi-gcc
 LD = $(GCC_ROOT)/arm-none-eabi-gcc
 OBJCOPY = $(GCC_ROOT)/arm-none-eabi-objcopy
+OOCD = $(OOCD_ROOT)/openocd
 
 DEFINES = -D__MSP432P401R__
 
@@ -24,8 +26,8 @@ all: $(TARGET)
 
 $(TARGET): $(OBJECTS) $(CMSIS_OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) $(CMSIS_OBJECTS) -o $(TARGET)
-	$(OBJCOPY) -O ihex $(TARGET) device.hex
-	$(OBJCOPY) -O binary $(TARGET) device.bin
+	$(OBJCOPY) -O ihex $(TARGET) $(basename $(TARGET)).hex
+	$(OBJCOPY) -O binary $(TARGET) $(basename $(TARGET)).bin
 
 
 
@@ -33,7 +35,18 @@ $(TARGET): $(OBJECTS) $(CMSIS_OBJECTS)
 	$(CC) $(DEFINES) $(CFLAGS) $^ -o $@
 
 burn:
-	/opt/uniflash/dslite.sh --config=/opt/uniflash/user_files/configs/msp432p401r.ccxml device.hex
+	/opt/uniflash/dslite.sh --config=/opt/uniflash/user_files/configs/msp432p401r.ccxml $(basename $(TARGET)).hex
+
+flash:
+	$(OOCD) -f msp432.cfg -c "init" \
+		-c "reset halt" \
+		-c "msp432p4 init 0" \
+		-c "msp432p4 mass_erase 0" \
+		-c "msp432p4 init 0" \
+		-c "flash write_image $(basename $(TARGET)).bin" \
+		-c "reset run" \
+		-c "shutdown"
+
 
 clean:
 	rm *.o *.elf
